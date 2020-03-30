@@ -1,0 +1,15 @@
+{
+  "name": "@zingle/ops-site",
+  "version": "0.0.1",
+  "description": "website for Zingle operations resources",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Zingle/ops-site.git"
+  },
+  "author": "Richard Remer <reanjr@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Zingle/ops-site/issues"
+  },
+  "homepage": "https://github.com/Zingle/ops-site#readme"
+}
