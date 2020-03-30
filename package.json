@@ -11,5 +11,11 @@
   "bugs": {
     "url": "https://github.com/Zingle/ops-site/issues"
   },
-  "homepage": "https://github.com/Zingle/ops-site#readme"
+  "homepage": "https://github.com/Zingle/ops-site#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "pug": "^2.0.4",
+    "systemd": "^0.3.1",
+    "tlsopt": "^2.1.0"
+  }
 }
