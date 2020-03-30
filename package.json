@@ -2,6 +2,9 @@
   "name": "@zingle/ops-site",
   "version": "0.0.1",
   "description": "website for Zingle operations resources",
+  "directories": {
+    "bin": "bin"
+  },
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/Zingle/ops-site.git"
