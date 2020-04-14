@@ -14,7 +14,7 @@ const listen = LISTEN_PID ? "systemd" : (LISTEN_PORT || (server.tls ? 443 : 80))
 site.set("view engine", "pug");
 site.set("views", join(__dirname, "views"));
 
-for (let dir of dirs) {
+for (let dir of [...dirs, join(__dirname, "pub")]) {
     console.info(`publishing directory: ${dir}`);
     site.use("/public", express.static(dir));
 }

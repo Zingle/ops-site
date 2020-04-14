@@ -5,6 +5,9 @@
   "directories": {
     "bin": "bin"
   },
+  "scripts": {
+    "prepare": "make"
+  },
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/Zingle/ops-site.git"
@@ -20,5 +23,8 @@
     "pug": "^2.0.4",
     "systemd": "^0.3.1",
     "tlsopt": "^2.1.0"
+  },
+  "devDependencies": {
+    "node-sass": "^4.13.1"
   }
 }
