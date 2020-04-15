@@ -1,0 +1,25 @@
+html
+  head
+    title Zingle operations resources
+    meta(name="viewport", content="width=device-width")
+    link(rel="stylesheet", type="text/css", href="public/ops.css")
+  body
+    h1 Zingle Ops
+    nav
+      a(href="/") Homepage
+      a(href="/download") Downloads
+      a(href="/request") Request
+    h2 Request
+    form(id="request", method="post")
+      fieldset
+        label(for="request-email") Email address
+        input(id="request-email", type="email", name="email", placeholder="foo@example.com")
+
+        label(for="request-title") Describe your request in a few words
+        input(id="request-title", type="text", name="title", placeholder="do a thing")
+
+        label(for="request-description") Add more detail
+        textarea(id="request-description", cols=80, rows=10, name="description", placeholder="Need a thing that:\n  1. does something\n  2. is useful\n  3. works")
+
+      fieldset
+        button(type="submit") Submit Request

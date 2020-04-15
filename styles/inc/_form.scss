@@ -1,0 +1,48 @@
+// assumes inc/_color is imported
+
+fieldset {
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+input, textarea, button {
+    border: 0.05rem solid $edge;
+}
+
+input, textarea {
+    padding: 0.25rem;
+    width: 100%;
+}
+
+button {
+    background-color: $primary-tint-up;
+    color: $dark;
+    font-size: 1rem;
+    font-weight: 400;
+    margin: 1rem 0;
+    padding: 0.25rem;
+
+    &:hover {
+        border-color: $primary;
+    }
+
+    &:active {
+        background-color: $dark;
+        color: $light;
+    }
+}
+
+label {
+    display: block;
+    margin: 1rem 0;
+}
+
+::placeholder {
+    color: $edge;
+    font-style: italic;
+}
+
+:focus::placeholder {
+    color: transparent;
+}
