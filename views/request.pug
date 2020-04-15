@@ -2,19 +2,19 @@ html
   head
     title Zingle operations resources
     meta(name="viewport", content="width=device-width")
-    link(rel="stylesheet", type="text/css", href="public/ops.css")
+    link(rel="stylesheet", type="text/css", href="/style/ops.css")
+    script(type="module", src="/script/ops.js")
   body
     h1 Zingle Ops
     nav
       a(href="/") Homepage
       a(href="/download") Downloads
       a(href="/request") Request
+      a(href="/login", class="login hidden") Login
+      a(href="/logout", class="logout hidden") Logout
     h2 Request
     form(id="request", method="post")
       fieldset
-        label(for="request-email") Email address
-        input(id="request-email", type="email", name="email", placeholder="foo@example.com")
-
         label(for="request-title") Describe your request in a few words
         input(id="request-title", type="text", name="title", placeholder="do a thing")
 

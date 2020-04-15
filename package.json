@@ -1,6 +1,6 @@
 {
   "name": "@zingle/ops-site",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "website for Zingle operations resources",
   "directories": {
     "bin": "bin"
@@ -21,7 +21,10 @@
   "dependencies": {
     "body-parser": "^1.19.0",
     "express": "^4.17.1",
+    "express-session": "^1.17.0",
     "node-fetch": "^2.6.0",
+    "passport": "^0.4.1",
+    "passport-google-oauth2": "^0.2.0",
     "pug": "^2.0.4",
     "systemd": "^0.3.1",
     "tlsopt": "^2.1.0"

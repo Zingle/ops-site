@@ -68,6 +68,30 @@ form {
     padding: 0;
 }
 
+main {
+    text-align: center;
+
+    button {
+        margin: 1rem;
+        padding: 0;
+
+        a {
+            display: inline-block;
+            margin: -0.25rem;
+            padding: 0.5rem;
+            text-decoration: none;
+        }
+
+        a, a:visited, a:hover, a:active {
+            color: inherit;
+        }
+    }
+}
+
+iframe {
+    margin: 1rem;
+}
+
 a, a:visited {
     color: inherit;
     text-decoration: underline;
@@ -79,4 +103,8 @@ a:hover {
 
 a:active {
     color: $primary-tint-up;
+}
+
+.hidden {
+    display: none;
 }

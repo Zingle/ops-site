@@ -1,8 +1,12 @@
 const {STATUS_CODES} = require("http");
+const {randomBytes} = require("crypto");
 const {join} = require("path");
 const tlsopt = require("tlsopt");
 const express = require("express");
+const session = require("express-session");
 const {json, urlencoded} = require("body-parser");
+const passport = require("passport");
+const {Strategy: OAuthStrategy} = require("passport-google-oauth2");
 const {PivotalTrackerProject} = require("./lib/pt");
 
 // disable debug log unless debugging is enabled
@@ -11,50 +15,97 @@ if (!process.env.DEBUG) console.debug = () => {};
 // importing this lib patches global Server objects with systemd support
 require("systemd");
 
+// read environment
 const {LISTEN_PORT, LISTEN_PID, PUBLIC_DIRS, DOMAINS} = process.env;
-const {PT_TOKEN, PT_PROJECT_ID} = process.env;
-const dirs = PUBLIC_DIRS ? PUBLIC_DIRS.split(":") : [];
-const domains = DOMAINS ? DOMAINS.split(",") : [];
+const {PT_TOKEN, PT_PROJECT_ID, GOOGLE_IDENT, GOOGLE_SECRET} = process.env;
+
 const site = express();
 const server = tlsopt.createServerSync(site);
+const secret = randomBytes(48).toString("base64");
+const dirs = PUBLIC_DIRS ? PUBLIC_DIRS.split(":") : [];
+const domains = DOMAINS ? DOMAINS.split(",") : [];
 const listen = LISTEN_PID ? "systemd" : (LISTEN_PORT || (server.tls ? 443 : 80));
 const pt = PT_TOKEN && PT_PROJECT_ID
     ? new PivotalTrackerProject(PT_TOKEN, PT_PROJECT_ID)
     : undefined;
 
+passport.serializeUser((user, done) => done(null, user));
+passport.deserializeUser((object, done) => done(null, object));
+
+passport.use(new OAuthStrategy({
+    clientID: GOOGLE_IDENT,
+    clientSecret: GOOGLE_SECRET,
+    callbackURL: "https://ops.zingle.me/auth/google"
+}, (access, refresh, profile, done) => {
+    done(null, profile);
+}));
+
 site.set("view engine", "pug");
 site.set("views", join(__dirname, "views"));
 
-for (let dir of [...dirs, join(__dirname, "pub")]) {
+for (let dir of dirs) {
     console.info(`publishing directory: ${dir}`);
     site.use("/public", express.static(dir));
 }
 
+site.use(express.static(join(__dirname, "pub")));
 site.use(json());
 site.use(urlencoded({extended: false}));
+site.use(session({secret, resave: false, saveUninitialized: false}));
+site.use(passport.initialize());
+site.use(passport.session());
 
 site.get("/", (req, res) => {
     res.render("home");
+});
+
+site.get("/login", (req, res) => {
+    res.redirect("/login/google");
+});
+
+site.get("/logout", (req, res) => {
+    req.logout();
+    res.redirect("/");
+});
+
+site.get("/login/google", passport.authenticate("google", {
+    scope: ["profile", "email"]
+}));
+
+site.get("/auth/google", passport.authenticate("google", {
+    failureRedirect: "/login",
+    session: true
+}), (req, res) => {
+    res.redirect("/");
+});
+
+site.get("/me", authed(), (req, res) => {
+    res.send(req.user);
 });
 
 site.get("/download", (req, res) => {
     res.render("download");
 });
 
-site.get("/request", (req, res) => {
+site.get("/request", authed(), (req, res) => {
     res.render("request");
 });
 
-site.post("/request", async (req, res, next) => {
+site.post("/request", authed(), async (req, res, next) => {
     if (!pt) return res.status(502);
 
-    const {body: {email, title, description}} = req;
+    const {user: {email}} = req;
+    const {body: {title, description}} = req;
     const errors = [];
+
+    if (!validateEmail(email)) {
+        res.status(403);
+        return next();
+    }
 
     try {
         if (description && !title) title = `request from ${email}`;
         if (!email) errors.push("email: required");
-        if (email && !validateEmail(email)) errors.push("email: invalid email address");
         if (!title && !description) errors.push("title: required");
         if (errors.length) return badRequest(res, errors);
 
@@ -84,6 +135,7 @@ site.use((err, req, res, next) => {
         res.status(err);
     } else {
         console.error(`error: ${err.message}`);
+        console.debug(err.stack);
         res.status(500);
     }
 
@@ -109,10 +161,28 @@ if (listen === "systemd") {
  */
 function allow(methods) {
     return (req, res, next) => {
-        res.set("Allow", methods.join(","));
-        res.status(405);
+        if (res.status === 200) {
+            res.set("Allow", methods.join(","));
+            res.status(405);
+        }
+
         next();
     };
+}
+
+/**
+ * Create authorization middleware.
+ */
+function authed() {
+    return (req, res, next) => {
+       if (!req.user) {
+           res.status(401);
+           res.set("WWW-Authenticate", "Bearer");
+           next("route");
+       } else {
+           next();
+       }
+   };
 }
 
 /**
@@ -135,6 +205,9 @@ function sendStatus(res) {
         case 202:
             res.send();
             break;
+        case 401:
+            res.render("login");
+            break;
         case 200:
             res.status(404);
             // fallthrough
@@ -149,15 +222,7 @@ function sendStatus(res) {
  * @returns {boolean}
  */
 function validateEmail(email) {
-    const [name, domain, ...extra] = email.split("@");
-
-    if (extra.length) {
-        console.debug(`email address malformed or not supported: ${email}`);
-        return false;
-    } else if (!domains.includes(domain)) {
-        console.debug(`email address not allowed from: ${email}`);
-        return false;
-    } else {
-        return true;
-    }
+    return domains.some(domain => {
+        return email.slice(-(domain.length+1)) === `@${domain}`;
+    })
 }
