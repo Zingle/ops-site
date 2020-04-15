@@ -76,7 +76,9 @@ site.get("/auth/google", passport.authenticate("google", {
     failureRedirect: "/login",
     session: true
 }), (req, res) => {
-    res.redirect("/");
+    const url = req.session.url || "/";
+    delete req.session.url;
+    res.redirect(url);
 });
 
 site.get("/me", authed(), (req, res) => {
@@ -87,7 +89,7 @@ site.get("/download", (req, res) => {
     res.render("download");
 });
 
-site.get("/request", authed(), (req, res) => {
+site.get("/request", authed(true), (req, res) => {
     res.render("request");
 });
 
@@ -172,10 +174,15 @@ function allow(methods) {
 
 /**
  * Create authorization middleware.
+ * @param {boolean} saveURL
  */
-function authed() {
+function authed(saveURL) {
     return (req, res, next) => {
        if (!req.user) {
+           if (saveURL) {
+               req.session.url = `https://ops.zingle.me${req.originalUrl}`;
+           }
+
            res.status(401);
            res.set("WWW-Authenticate", "Bearer");
            next("route");
