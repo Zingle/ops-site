@@ -8,6 +8,7 @@ const {json, urlencoded} = require("body-parser");
 const passport = require("passport");
 const {Strategy: OAuthStrategy} = require("passport-google-oauth2");
 const {PivotalTrackerProject} = require("./lib/pt");
+const paginator = require("./lib/paginator");
 
 // disable debug log unless debugging is enabled
 if (!process.env.DEBUG) console.debug = () => {};
@@ -89,6 +90,10 @@ site.get("/download", (req, res) => {
     res.render("download");
 });
 
+site.get("/stories", authed(), paginator(async function*() {
+    yield* pt.stories();
+}));
+
 site.get("/request", authed(true), (req, res) => {
     res.render("request");
 });
@@ -125,7 +130,7 @@ site.post("/request", authed(), async (req, res, next) => {
 });
 
 // send appropriate 405 responses
-site.all(["/", "/download"], allow(["GET"]));
+site.all(["/", "/download", "/stories"], allow(["GET"]));
 site.all("/request", allow(["GET", "POST"]));
 
 // send status description in body or generate 404
