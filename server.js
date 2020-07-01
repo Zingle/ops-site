@@ -9,6 +9,7 @@ const passport = require("passport");
 const {Strategy: OAuthStrategy} = require("passport-google-oauth2");
 const {PivotalTrackerProject} = require("./lib/pt");
 const paginator = require("./lib/paginator");
+const {sendFile} = require("./lib/template");
 
 // disable debug log unless debugging is enabled
 if (!process.env.DEBUG) console.debug = () => {};
@@ -41,7 +42,8 @@ passport.use(new OAuthStrategy({
     done(null, profile);
 }));
 
-site.set("view engine", "pug");
+site.engine("html", sendFile);
+site.set("view engine", "html");
 site.set("views", join(__dirname, "views"));
 
 for (let dir of dirs) {
