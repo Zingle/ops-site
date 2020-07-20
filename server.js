@@ -17,13 +17,15 @@ if (!process.env.DEBUG) console.debug = () => {};
 require("systemd");
 
 // read environment
-const {LISTEN_PORT, LISTEN_PID, PUBLIC_DIRS, DOMAINS} = process.env;
+const {LISTEN_PORT, LISTEN_PID, DOMAINS} = process.env;
+const {PUBLIC_DIRS, SECURE_DIRS} = process.env;
 const {PT_TOKEN, PT_PROJECT_ID, GOOGLE_IDENT, GOOGLE_SECRET} = process.env;
 
 const site = express();
 const server = tlsopt.createServerSync(site);
 const secret = randomBytes(48).toString("base64");
-const dirs = PUBLIC_DIRS ? PUBLIC_DIRS.split(":") : [];
+const pubdirs = PUBLIC_DIRS ? PUBLIC_DIRS.split(":") : [];
+const securedirs = SECURE_DIRS ? SECURE_DIRS.split(":") : [];
 const domains = DOMAINS ? DOMAINS.split(",") : [];
 const listen = LISTEN_PID ? "systemd" : (LISTEN_PORT || (server.tls ? 443 : 80));
 const pt = PT_TOKEN && PT_PROJECT_ID
@@ -44,7 +46,7 @@ passport.use(new OAuthStrategy({
 site.set("view engine", "pug");
 site.set("views", join(__dirname, "views"));
 
-for (let dir of dirs) {
+for (let dir of pubdirs) {
     console.info(`publishing directory: ${dir}`);
     site.use("/public", express.static(dir));
 }
@@ -55,6 +57,11 @@ site.use(urlencoded({extended: false}));
 site.use(session({secret, resave: false, saveUninitialized: false}));
 site.use(passport.initialize());
 site.use(passport.session());
+
+for (let dir of securedirs) {
+    console.info(`serving secured directory: ${dir}`);
+    site.use("/secure", authed("domain"), express.static(dir));
+}
 
 site.get("/", (req, res) => {
     res.render("home");
@@ -90,25 +97,20 @@ site.get("/download", (req, res) => {
     res.render("download");
 });
 
-site.get("/stories", authed(), paginator(async function*() {
+site.get("/stories", authed("domain"), paginator(async function*() {
     yield* pt.stories();
 }));
 
-site.get("/request", authed(true), (req, res) => {
+site.get("/request", authed("save"), (req, res) => {
     res.render("request");
 });
 
-site.post("/request", authed(), async (req, res, next) => {
+site.post("/request", authed("domain"), async (req, res, next) => {
     if (!pt) return res.status(502);
 
     const {user: {email}} = req;
     const {body: {title, description}} = req;
     const errors = [];
-
-    if (!validateEmail(email)) {
-        res.status(403);
-        return next();
-    }
 
     try {
         if (description && !title) title = `request from ${email}`;
@@ -178,23 +180,27 @@ function allow(methods) {
 }
 
 /**
- * Create authorization middleware.
- * @param {boolean} saveURL
+ * Create authorization middleware.  Supported flags:
+ *   domain:    verify user if member of configured domains
+ *   save:      save return URL if unauthenticated
+ * @param {string} ...flags
  */
-function authed(saveURL) {
+function authed(...flags) {
     return (req, res, next) => {
-       if (!req.user) {
-           if (saveURL) {
-               req.session.url = `https://ops.zingle.me${req.originalUrl}`;
-           }
+        if (!req.user) {
+            if (flags.includes("save")) {
+                req.session.url = `https://ops.zingle.me${req.originalUrl}`;
+            }
 
-           res.status(401);
-           res.set("WWW-Authenticate", "Bearer");
-           next("route");
-       } else {
-           next();
-       }
-   };
+            res.status(401);
+            res.set("WWW-Authenticate", "Bearer");
+            throw 401;
+        } else if (flags.includes("domain") && !validateEmail(req.user.email)) {
+            throw 403;
+        } else {
+            next();
+        }
+    };
 }
 
 /**
