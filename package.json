@@ -1,6 +1,6 @@
 {
   "name": "@zingle/ops-site",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "website for Zingle operations resources",
   "directories": {
     "bin": "bin"
