@@ -10,9 +10,10 @@ build: styles
 styles: $(stylesheets)
 
 clean:
-	rm -fr pub/*
+	rm -fr pub/style/*
 
 pub/style/%.css: styles/%.scss $(includes)
+	@mkdir -p $(@D)
 	$(sass) $< > $@
 
 .PHONY: default build clean styles
