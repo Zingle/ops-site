@@ -33,6 +33,6 @@
     "tlsopt": "^2.1.0"
   },
   "devDependencies": {
-    "node-sass": "^4.14"
+    "node-sass": "^7.0"
   }
 }
