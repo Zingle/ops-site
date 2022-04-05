@@ -28,6 +28,7 @@
     "node-fetch": "^3.2.3",
     "passport": "^0.4.1",
     "passport-google-oauth2": "^0.2.0",
+    "passport-oauth2": "^1.6.1",
     "pug": "^3.0.0",
     "systemd": "^0.3.1",
     "tlsopt": "^2.1.0"
